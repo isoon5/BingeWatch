@@ -38,7 +38,7 @@ exit_button.place(x = 40, y = root.winfo_screenheight() * 0.75 - 50)
 tmdb = TMDb()
 tmdb.api_key = 'https://api.themoviedb.org/3/movie/550?api_key=ead60b2309bd3aba9817000af517c069'
 
-
+#
 
 def jprint(obj):
     # create a formatted string of the Python JSON object
