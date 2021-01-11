@@ -43,12 +43,13 @@ background_color = '#131010'
 root = Tk()
 root.configure(bg = background_color)
 root.attributes('-fullscreen', True)
-#root.resizable(False, False)
 
 
-def exit_ (root): 
+
+def exit_ (root):
     root.destroy()
 
+#placing the aside buttons
 search_button = Button(root, text = "Search", command = lambda: searchWindow(), width = 20, height = 5, bg = '#000000', fg = '#FFCB09', font = 'sans-serif', activebackground = '#FFCB09', activeforeground = "#000000" )
 search_button.place(x = 40, y = root.winfo_screenheight() *  0.10  - 50)
 
@@ -58,14 +59,14 @@ discover_button.place(x = 40, y = root.winfo_screenheight() *  0.30 - 50)
 favorite_button = Button(root, text = "Favorites", command = lambda: favorites(), width = 20, height = 5, bg = '#000000', fg = '#FFCB09', font = 'sans-serif', activebackground = '#FFCB09', activeforeground = "#000000" )
 favorite_button.place(x = 40, y = root.winfo_screenheight() * 0.50 - 50)
 
-collection_button = Button(root, text = "Snoozed shows", command = lambda: show_collection(), width = 20, height = 5, bg = '#000000', fg = '#FFCB09', font = 'sans-serif', activebackground = '#FFCB09', activeforeground = "#000000" )
+collection_button = Button(root, text = "Collection", command = lambda: show_collection(), width = 20, height = 5, bg = '#000000', fg = '#FFCB09', font = 'sans-serif', activebackground = '#FFCB09', activeforeground = "#000000" )
 collection_button.place(x = 40, y = root.winfo_screenheight() * 0.70 - 50)
 
 exit_button = Button(root, text = "Exit", command = lambda: exit_(root), width = 20, height = 5, bg = '#000000', fg = '#FFCB09', font = 'sans-serif', activebackground = '#FFCB09', activeforeground = "#000000")
 exit_button.place(x = 40, y = root.winfo_screenheight() * 0.90 - 50)
 
 def jprint(obj):
-    # create a formatted string of the Python JSON object
+    # created a formatted string of the Python JSON object
     text = json.dumps(obj, sort_keys=True, indent=4)
     print(text)
 
@@ -141,16 +142,22 @@ def callback(url):
 
 
 def show_collection():
-
+    """ this function will display all the snoozed shows"""
     for widget in root.winfo_children():
         if widget != discover_button and widget != favorite_button and widget != exit_button and widget != search_button and widget != collection_button:
             widget.destroy()
 
     c = conn.cursor()
-    c.execute('SELECT * FROM tv_shows where snoozed = 1')
+    #selecting the snoozed one first
+    c.execute('SELECT * FROM tv_shows WHERE snoozed = 1')
     
     rows = c.fetchall()
+    #and then the finished ones
+    c.execute('SELECT * FROM tv_shows WHERE finished = 1')
+    finished_shows = c.fetchall()
 
+    rows = rows + finished_shows
+    
     canvas = Canvas(root, width = root.winfo_screenwidth() , height = root.winfo_screenheight() -25, bg = background_color, bd = 0, highlightthickness=0)
     canvas.place(x = 325, y=20)
 
@@ -166,6 +173,7 @@ def show_collection():
     unsnooze_buttons = []
 
     for row in rows:
+   
         img_data = requests.get(row[10]).content
         img = ImageTk.PhotoImage(Image.open(BytesIO(img_data)))
         img = img._PhotoImage__photo.subsample(3)
@@ -178,9 +186,12 @@ def show_collection():
             endline = 0
 
         canvas.create_window((30 + row_space * endline,240+ vertical_pos), window = panel, anchor = 'nw')
-
-        unsnooze_buttons.append(Button(canvas, command = lambda c = iterate : unsnooze(rows[c]), text = 'Unsnooze', bg ='#554014'))
-        canvas.create_window((200 + row_space * endline, 240 + vertical_pos), window = unsnooze_buttons[iterate], anchor = 'nw')
+        if rows[iterate][12] == 1:
+            unsnooze_buttons.append(Button(canvas, command = lambda c = iterate : unsnooze(rows[c]), text = 'Unsnooze', bg ='#554014'))
+            canvas.create_window((200 + row_space * endline, 240 + vertical_pos), window = unsnooze_buttons[iterate], anchor = 'nw')
+        if rows[iterate][11] == 1:
+            status = Label(canvas, text = 'Finished', bg ='#D99300')
+            canvas.create_window((200 + row_space * endline, 240 + vertical_pos), window = status, anchor = 'nw')
 
         iterate += 1
         endline += 1
@@ -192,11 +203,19 @@ def show_collection():
 
 
 
-def _show(data, season, episode, flag):  
+def _show(data, season, episode, flag): 
+
+    """ This will be shown open 'Open show' button will be pressed
+        This function will display almost all the data from the DB
+    
+    """ 
+
+    #as before we remove every widget but those aside
     for widget in root.winfo_children():
          if widget != discover_button and widget != favorite_button and widget != exit_button and widget != search_button and widget != collection_button:
             widget.destroy()
 
+    #displaying the show's title
     title = Label(root, text = data[1], bg = background_color, fg = '#FFCB09', font = ('sans-serif', 40), highlightcolor = '#FFF')
     title.pack()
 
@@ -210,6 +229,7 @@ def _show(data, season, episode, flag):
     if flag:
         time_date = str(date.today())
 
+    #updating the data in the db
     c = conn.cursor()
     c.execute(""" UPDATE tv_shows SET user_season = ?, user_episode = ?, last_watch = ? WHERE id LIKE ? """, (int(season), int(episode), time_date, data[0]))    
     data_list[5] = season
@@ -220,7 +240,7 @@ def _show(data, season, episode, flag):
     conn.commit()
     c.close()
 
-
+    #displaying the poster of the show
     img_url = data[10]
     img_data = requests.get(img_url).content
     img = ImageTk.PhotoImage(Image.open(BytesIO(img_data)))
@@ -232,19 +252,21 @@ def _show(data, season, episode, flag):
     show_length = Label(root, text = 'Seasons: {}  Episodes: {}'.format(data[3], data[4]))
     show_length.place(x = 900, y  = 500)
 
-
+    #mark episode as watched 
     if last_viewed_episode == int(data[4]) + 1:
         last_viewed_season = season + 1
         last_viewed_episode = 1
     
     if season == int(data[3]) and episode == int(data[4]):
+        #checking if the user finished the show
         mark_button = Button(root, text = "You've finished the show", command = lambda: favorites(), width = 28, height = 3, bg = '#000000', fg = '#FFCB09', font = ('sans-serif', 12), activebackground = '#FFCB09', activeforeground = "#000000")
         c = conn.cursor()
+        #if so the show will be updated as finished in the db and will no longer appear in this window
         c.execute(""" UPDATE tv_shows SET finished = 1 WHERE id LIKE ? """, (data[0],))
         conn.commit()
         c.close()  
         mark_button.place(relx = 0.435, y = 540)
-
+        
         last_time_watched =  Label(root, text = 'Last time you watched {} was on {}'.format(data[1], data[7]), font = ('sans-serif', 12) )
         last_time_watched.configure(anchor = CENTER)
         last_time_watched.pack()
@@ -261,18 +283,19 @@ def _show(data, season, episode, flag):
         last_time_watched.configure(anchor = CENTER)
         last_time_watched.pack()
 
+    #placing the hyperlink button that will redirect to the trailer of the show
     hyperlinkTrailer = Label(root, text = 'Trailer', bg ='#FF0000', fg = '#FFFFFF', font = ('sans-serif', 15, 'bold'), padx = 12, pady = 6)
     hyperlinkTrailer.place(relx = 0.45, y = 640)
     hyperlinkTrailer.bind('<Button-1>', lambda e: callback(data[9]))
 
+    #placing the hyperlink button that will redirect to TMDB show's page
     hyperlinkTMDB = Label(root, text = 'TMDB', bg ='#01b4e4', fg = '#FFFFFF', font = ('sans-serif', 15, 'bold'), padx = 12, pady = 6)
     hyperlinkTMDB.place(relx = 0.51, y = 640)
     hyperlinkTMDB.bind('<Button-1>', lambda e: callback(data[2] + '/season/' + str(data[5]) + '/episode/' + str(data[6])))
 
     def update_score(id, rating, widget):
+        """ updating the score """
         widget.destroy()
-        
-        print('Rating: ', rating)
         
         c = conn.cursor()
         c.execute(""" SELECT score from tv_shows WHERE id LIKE ? """, (id,))
@@ -291,7 +314,7 @@ def _show(data, season, episode, flag):
         score_box = Label(root, text = updated_score, bg = '#E09500', font = ('Verdana', 32, 'bold'), width = 5, pady = 15)
         score_box.place(x = 1720, y= 0)
    
-        
+    #placing input box for the score
     rating = Entry(root, width = 5, font = ('Verdana', 16), fg = '#696969')
     rating.place(x = 910, y = 720)
 
@@ -310,19 +333,22 @@ def _show(data, season, episode, flag):
 
 
 def add_favorites(obj, id, name):
-    
+    """ This will be called when "Add to favorites" button is pressed """
+    #requesting the trailer link from youtube API
     results = SearchVideos(name + ' Official Trailer', offset = 1, mode = "dict", max_results = 1).result()
     trailer_link = results['search_result'][0]['link']
     tv_index = str(obj['results'][id]['id'])
     tmdb_link = "https://www.themoviedb.org/tv/"+tv_index
     img_url = 'https://image.tmdb.org/t/p/w500' + obj['results'][id]['poster_path']
 
+    #requesting the episode post from the API
     response = requests.get("https://api.themoviedb.org/3/tv/"+ tv_index +"?api_key=ead60b2309bd3aba9817000af517c069&language=en-US")
     json_tv_data = json.loads(response.text)
     
     print(json_tv_data['last_episode_to_air']['season_number'])
     last_season_to_air = json_tv_data['last_episode_to_air']['season_number']
     last_episode_to_air = json_tv_data['last_episode_to_air']['episode_number']
+    #inserting all the data from json to the database
     c.execute(""" INSERT OR IGNORE INTO tv_shows VALUES
         (?, ?, ?, ?, ?, 1, 0, NULL, 0, ?, ?, False, 0)
 
@@ -334,9 +360,8 @@ def add_favorites(obj, id, name):
     print('\n')
     c.close()
 
-
-
 def snooze(data):
+    """ snoozing a show """
     c = conn.cursor()
     c.execute("UPDATE tv_shows SET snoozed = 1 where id = ?", (data[0],))
     conn.commit()
@@ -344,24 +369,28 @@ def snooze(data):
     favorites()
 
 def unsnooze(data):
+    """ unsnoozing a show """
     c = conn.cursor()
     c.execute("UPDATE tv_shows SET snoozed = 0 where id = ?", (data[0],))
     conn.commit()
     c.close()
     show_collection()
 
-
 def favorites():
+    """ This function will display all favorites titles added by the user"""
     for widget in root.winfo_children():
+        #first we remove anything but the 4 buttons aside
          if widget != discover_button and widget != favorite_button and widget != exit_button and widget != search_button and widget != collection_button:
             widget.destroy()
 
 
-    def on_configure(event):  
+    def on_configure(event):
+        """ scolling the canvas on event"""  
         canvas.configure(scrollregion=canvas.bbox('all'))
 
 
     c = conn.cursor()
+    #fetching from the DB all the active tv shows: that are not finished nor snoozed
     row = c.execute("select * from tv_shows where finished = 0 and snoozed = 0 order by score desc")
     rows = c.fetchall()
     endline = 0
@@ -370,7 +399,7 @@ def favorites():
     open_buttons = []
     snooze_buttons = []
     
-
+    #creating a canvas so we can scroll
     canvas = Canvas(root, width = root.winfo_screenwidth() , height = root.winfo_screenheight() -25, bg = background_color, bd = 0, highlightthickness=0)
     canvas.place(x = 325, y=20)
 
@@ -378,7 +407,7 @@ def favorites():
     scrollbar.pack(side='right', fill = 'y')
    
     iterate = 0
-
+    #adding all the favorite titles to the canvas 
     for row in rows:    
         img_url = row[10]
         img_data = requests.get(img_url).content
@@ -387,13 +416,14 @@ def favorites():
         photoimage_list.append(img)
 
         panel = Label(canvas, image = img)
-        
+        #4 titles per row
         if(endline > 4):
             vertical_pos = vertical_pos + 340
             endline = 0
 
         canvas.create_window((30 + row_space * endline,240+ vertical_pos), window = panel, anchor = 'nw')
 
+        #placing the corresponding buttons
         open_buttons.append(Button(canvas, command = lambda c = iterate: _show(rows[c], rows[c][5], rows[c][6], flag = False), text = "Open Show", width = 13, height = 2, bg = '#000000', fg = '#FFCB09', font = ('sans-serif', 10) , activebackground = '#FFCB09', activeforeground = "#000000" ))
         canvas.create_window((60 + row_space * endline, 515 + vertical_pos), window = open_buttons[iterate], anchor = 'nw')  
 
@@ -409,14 +439,14 @@ def favorites():
 
     c.close()
 
-
 def home_page():
+    """ Placing all the widgets on the home screen."""
     fav_buttons = []
     name = []
     for widget in root.winfo_children():
         if widget != discover_button and widget != favorite_button and widget != exit_button and widget != search_button and widget != collection_button:
             widget.destroy()
-
+    #choosing 15 title's from the trending request
     for i in range(15):
             
             name.append(json_data['results'][i]['name'])
@@ -425,12 +455,14 @@ def home_page():
             print(img_url)
             print('\n')
 
+            #requesting from API the title's poster
             img_data = requests.get(img_url).content
             img = ImageTk.PhotoImage(Image.open(BytesIO(img_data)))
             img = img._PhotoImage__photo.subsample(3)
             photoimage_list.append(img)
             panel = Label(root, image=img)
-            
+
+            #placing the "Add to favorites" button for every title
             if i <= 4:  
                 panel.place(x = 320 + row_space * i , y = 80)
                 fav_buttons.append(Button(root, command = lambda c = i: add_favorites(json_data, c, name[c]), text = "Add to Favorites", width = 13, height = 2, bg = '#000000', fg = '#FFCB09', font = ('sans-serif', 10) , activebackground = '#FFCB09', activeforeground = "#000000" ))
@@ -444,10 +476,7 @@ def home_page():
                 fav_buttons.append(Button(root, command = lambda c = i: add_favorites(json_data, c, name[c]), text = "Add to Favorites", width = 13, height = 2, bg = '#000000', fg = '#FFCB09', font = ('sans-serif', 10) , activebackground = '#FFCB09', activeforeground = "#000000" ))
                 fav_buttons[i].place(x = 350 + row_space * (i-10), y = 990)
            
-
 if response.status_code != 404:
     home_page()
     
-            
-
 root.mainloop()
