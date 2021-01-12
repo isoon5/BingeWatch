@@ -11,6 +11,7 @@ from random import randrange
 from youtubesearchpython import SearchVideos
 from PIL import UnidentifiedImageError
 import webbrowser
+import api
 
 #connecting to database
 
@@ -46,8 +47,6 @@ root.attributes('-fullscreen', True)
 
 
 
-def exit_ (root):
-    root.destroy()
 
 #placing the aside buttons
 search_button = Button(root, text = "Search", command = lambda: searchWindow(), width = 20, height = 5, bg = '#000000', fg = '#FFCB09', font = 'sans-serif', activebackground = '#FFCB09', activeforeground = "#000000" )
@@ -73,17 +72,19 @@ def jprint(obj):
 ### making a request for trending TV's in the last week
 ### posting them on the home screen
 
-response = requests.get('https://api.themoviedb.org/3/trending/tv/day?api_key=ead60b2309bd3aba9817000af517c069')
+api_key_code = api.api_key()
+print(api_key_code)
+
+response = requests.get('https://api.themoviedb.org/3/trending/tv/day?api_key=' + api_key_code)
 json_data = json.loads(response.text)
 
 row_space = 300
 photoimage_list = []
 
-
-
 def searchResults(obj, widget1, widget2, widget3):
+    """ this will be called when the user submits the search query """
     for widget in root.winfo_children():
-        if widget != discover_button and widget != favorite_button and widget != exit_button and widget != search_button and widget != widget1 and widget != widget2 and widget != widget3:
+        if widget != discover_button and widget != favorite_button and widget != exit_button and widget != search_button and widget != widget1 and widget != widget2 and widget != widget3 and widget != collection_button:
             widget.destroy()
     photoimage_list.clear()
     name = []
@@ -91,7 +92,7 @@ def searchResults(obj, widget1, widget2, widget3):
     show_name = obj.get()
     response = requests.get("https://api.themoviedb.org/3/search/tv?api_key=ead60b2309bd3aba9817000af517c069&language=en-US&page=1&query=" + show_name + "&include_adult=false")
     json_data = json.loads(response.text)
-    
+    #displaying first 10 results
     if int(json_data['total_results']) > 10:
         displayedResults = 10
     else:
@@ -124,12 +125,12 @@ def searchResults(obj, widget1, widget2, widget3):
     for pic in photoimage_list:
         print(pic)
 
-
-
 def searchWindow():
+    """ this function will display the search window, where the user can type a tv show and add it to favorites"""
     for widget in root.winfo_children():
          if widget != discover_button and widget != favorite_button and widget != exit_button and widget != search_button and widget != collection_button:
             widget.destroy()
+    
     text = Label(root, text = 'Type a TV Show: ', font = ('Verdana', 25), bg = '#696969')
     text.place(relx=0.30,rely=0.15, anchor = CENTER)
     input = Entry(root, width = 30, font = ('Verdana', 25), fg = '#696969')
@@ -139,7 +140,6 @@ def searchWindow():
     
 def callback(url):
     webbrowser.open_new(url)
-
 
 def show_collection():
     """ this function will display all the snoozed shows"""
@@ -155,7 +155,7 @@ def show_collection():
     #and then the finished ones
     c.execute('SELECT * FROM tv_shows WHERE finished = 1')
     finished_shows = c.fetchall()
-
+    #storing all of them in rows
     rows = rows + finished_shows
     
     canvas = Canvas(root, width = root.winfo_screenwidth() , height = root.winfo_screenheight() -25, bg = background_color, bd = 0, highlightthickness=0)
@@ -173,14 +173,14 @@ def show_collection():
     unsnooze_buttons = []
 
     for row in rows:
-   
+        #displaying all the shows
         img_data = requests.get(row[10]).content
         img = ImageTk.PhotoImage(Image.open(BytesIO(img_data)))
         img = img._PhotoImage__photo.subsample(3)
         photoimage_list.append(img)
 
         panel = Label(canvas, image = img)
-        
+        #4 on a row
         if(endline > 4):
             vertical_pos = vertical_pos + 340
             endline = 0
@@ -199,9 +199,6 @@ def show_collection():
 
     canvas.configure(yscrollcommand = scrollbar.set)
     canvas.bind('<Configure>', on_configure)
-
-
-
 
 def _show(data, season, episode, flag): 
 
@@ -330,7 +327,6 @@ def _show(data, season, episode, flag):
     score_box.place(x = 1720, y= 0)
 
     c.close()
-
 
 def add_favorites(obj, id, name):
     """ This will be called when "Add to favorites" button is pressed """
@@ -479,4 +475,6 @@ def home_page():
 if response.status_code != 404:
     home_page()
     
+def exit_ (root):
+    root.destroy()
 root.mainloop()
