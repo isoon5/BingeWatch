@@ -28,7 +28,7 @@ Dupa rulare se va deschide o fereastra full screen, unde vor aparea 15 postere c
 
 - Favorites:
             
-            -aici vor fi listate toate serialele adaugate de utilizator la favorite.
+             -aici vor fi listate toate serialele adaugate de utilizator la favorite.
 
              -user-ul va putea seta un scor pentru fiecare serial in parte si va putea vedea la ce episod a ramas ultima data si cand a vizionat episodul respectiv.
              
