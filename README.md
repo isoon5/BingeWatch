@@ -26,7 +26,9 @@ Dupa rulare se va deschide o fereastra full screen, unde vor aparea 15 postere c
 
 - Trending: buton care practic duce inapoi in pagina initiala (home page-ul) cu cele 15 seriale din tranding din ultima zi.
 
-- Favorites: -aici vor fi listate toate serialele adaugate de utilizator la favorite.
+- Favorites:
+            
+            -aici vor fi listate toate serialele adaugate de utilizator la favorite.
 
              -user-ul va putea seta un scor pentru fiecare serial in parte si va putea vedea la ce episod a ramas ultima data si cand a vizionat episodul respectiv.
              
