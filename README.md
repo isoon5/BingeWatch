@@ -27,8 +27,8 @@ Dupa rulare se va deschide o fereastra full screen, unde vor aparea 15 postere c
 - Trending: buton care practic duce inapoi in pagina initiala (home page-ul) cu cele 15 seriale din tranding din ultima zi.
 
 - Favorites: -aici vor fi listate toate serialele adaugate de utilizator la favorite.
-            -user-ul va putea seta un scor pentru fiecare serial in parte si va putea vedea la ce episod a ramas ultima data si cand a vizionat episodul respectiv.
-            -user-ul va putea pune pe snooze anumite seriale pe care nu mai doreste sa le urmareasca pentru momentan.
+             -user-ul va putea seta un scor pentru fiecare serial in parte si va putea vedea la ce episod a ramas ultima data si cand a vizionat episodul respectiv.
+             -user-ul va putea pune pe snooze anumite seriale pe care nu mai doreste sa le urmareasca pentru momentan.
 
 - Collection: va lista toate serialele puse pe snooze de catre user si serialele terminate de acesta.
 
