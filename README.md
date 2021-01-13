@@ -34,7 +34,7 @@ Dupa rulare se va deschide o fereastra full screen, unde vor aparea 15 postere c
              
              -user-ul va putea pune pe snooze anumite seriale pe care nu mai doreste sa le urmareasca pentru moment.
 
-- Collection: va lista toate serialele puse pe snooze de catre user si serialele terminate de acesta.
+- Collection: va lista toate serialele puse pe snooze (carora le poate da unsnooze) de catre user si serialele terminate de acesta.
 
 - Exit: exit din aplicatie.
             
